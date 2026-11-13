@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Red Light video</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=block">
+<style>
+:root { --fg: #fff; --dim: #8a8a8a; --line: rgba(255,255,255,.12); --line2: rgba(255,255,255,.28); --red: #FF2A1F; --amber: #FF6600; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; color: var(--fg); font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+.scene { position: absolute; inset: 0; visibility: hidden; }
+.abs { position: absolute; }
+.h { position: absolute; left: 0; right: 0; text-align: center; font: 700 104px/1 "Barlow Condensed", sans-serif; letter-spacing: .12em; padding-left: .12em; text-transform: uppercase; white-space: nowrap; }
+.h.s { font-size: 76px; }
+.sub { position: absolute; left: 0; right: 0; text-align: center; font: 400 28px/1.4 Inter, sans-serif; color: var(--dim); }
+.cap { font: 500 20px/1 "JetBrains Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); }
+
+/* a drawn monitor: .mon is the outline, .scr is the 1360 x 765 screen inside it */
+.mon { position: absolute; border: 1px solid var(--line2); border-radius: 12px; overflow: hidden; background: #000; }
+.scr { position: absolute; left: 0; top: 0; width: 1360px; height: 765px; transform-origin: 0 0; overflow: hidden; isolation: isolate; background: #c7d3e4; font-family: Inter, sans-serif; color: #111; }
+.scr .tint { position: absolute; inset: 0; background: #fff; mix-blend-mode: multiply; z-index: 50; }
+.mb { position: absolute; left: 0; right: 0; top: 0; height: 30px; background: #20232a; color: #f2f2f2; display: flex; align-items: center; padding: 0 16px; font-size: 13.5px; gap: 20px; }
+.mb .sq { width: 12px; height: 12px; background: #f2f2f2; border-radius: 3px; }
+.mb b { font-weight: 600; }
+.mb .r { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+.mb .bat { width: 24px; height: 11px; border: 1.2px solid #f2f2f2; border-radius: 3px; position: relative; }
+.mb .bat::after { content: ""; position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px; width: 14px; background: #f2f2f2; border-radius: 1px; }
+.mb .bulb { width: 20px; height: 20px; display: block; }
+.dw { position: absolute; border-radius: 10px; overflow: hidden; background: #fff; border: 1px solid #b4b9c2; box-shadow: 0 14px 34px rgba(20,30,50,.22); }
+.dw .tb { height: 32px; background: #e9eaed; border-bottom: 1px solid #cfd2d8; display: flex; align-items: center; padding: 0 12px; gap: 7px; font-size: 12.5px; color: #555; }
+.dw .tb i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.dw .tb span { margin-left: 10px; }
+.ln { height: 9px; border-radius: 4px; background: #c4c7cd; margin: 0 0 13px; }
+.dock { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 10px; padding: 8px 10px; background: rgba(255,255,255,.55); border: 1px solid #b4b9c2; border-radius: 16px; }
+.dock i { display: block; width: 40px; height: 40px; border-radius: 10px; }
+.cur { position: absolute; left: 0; top: 0; width: 26px; height: 26px; z-index: 40; }
+.ring { position: absolute; left: 0; top: 0; width: 60px; height: 60px; margin: -30px 0 0 -30px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); border-radius: 50%; opacity: 0; z-index: 39; }
+
+.key { width: 92px; height: 92px; border: 1px solid var(--line2); border-radius: 14px; background: #0e0e0e; display: flex; align-items: center; justify-content: center; font: 500 40px/1 Inter, "Helvetica Neue", sans-serif; color: #e6e6e6; }
+
+.menu { position: absolute; border: 1px solid var(--line2); border-radius: 14px; background: #0e0e0e; padding: 10px 0; font: 400 24px/1 Inter, sans-serif; color: #eaeaea; }
+.menu .it { height: 44px; display: flex; align-items: center; padding: 0 26px 0 54px; position: relative; }
+.menu .it .k { margin-left: auto; color: var(--dim); font-size: 21px; letter-spacing: .06em; }
+.menu .it .ck { position: absolute; left: 24px; top: 13px; width: 18px; height: 18px; }
+.menu .hd { height: 36px; display: flex; align-items: flex-end; padding: 0 26px 8px; font: 500 17px/1 Inter, sans-serif; color: var(--dim); }
+.menu .sep { height: 1px; background: var(--line); margin: 8px 0; }
+.menu .sl { height: 46px; display: flex; align-items: center; padding: 0 26px 0 54px; }
+.menu .sl span { width: 96px; }
+.menu .sl .tr { position: relative; flex: 1; height: 4px; background: #2a2a2a; border-radius: 2px; }
+.menu .sl .fl { position: absolute; left: 0; top: 0; bottom: 0; background: #d0d0d0; border-radius: 2px; }
+.menu .sl .kn { position: absolute; top: -9px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: #f2f2f2; }
+
+.stand { position: absolute; background: var(--line2); }
+.sw { width: 56px; height: 4px; margin: 0 auto 22px; }
+.pn { font: 600 46px/1 "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase; text-align: center; }
+.pv { font: 400 20px/1 "JetBrains Mono", monospace; color: var(--dim); text-align: center; margin-top: 16px; letter-spacing: .06em; }
+.uc { position: absolute; left: 0; right: 0; text-align: center; font: 500 26px/1 "JetBrains Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: #fff; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+const DUR = 32;
+const EVENTS = [];
+const $ = (s, r = document) => r.querySelector(s);
+const stage = $("#stage");
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const eOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const eIO = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const ramp = (t, a, d) => eOut((t - a) / d);
+const vis = (t, a, b, fin = .6, fout = .45) => Math.min(ramp(t, a, fin), eIO((b - t) / fout));
+function fx(el, v, blur = 14, dy = 12) {
+  el.style.opacity = v.toFixed(3);
+  el.style.filter = v < .999 ? `blur(${((1 - v) * blur).toFixed(2)}px)` : "none";
+  el.style.transform = `translateY(${((1 - v) * dy).toFixed(2)}px)`;
+}
+const op = (el, v) => { el.style.opacity = clamp(v).toFixed(3); };
+function mk(html) { const d = document.createElement("div"); d.className = "scene"; d.innerHTML = html; stage.append(d); return d; }
+
+/* ---------- the presets, as in main.swift ---------- */
+const OFF = [1, 1, 1];
+const RED = [1.0, 0.0, 0.0], DIM = [0.45, 0.0, 0.0], AMBER = [1.0, 0.4, 0.0];
+const mix = (a, b, k) => a.map((v, i) => v + (b[i] - v) * clamp(k));
+const f2 = (v) => v.toFixed(2);
+
+/* ---------- drawings ---------- */
+// The bulb is our own line drawing.
+const BULB = (fill, stroke, w = 1.7) => `<svg class="bulb" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"><path fill="${fill}" d="M12 2.8a6.3 6.3 0 0 0-4.1 11.1c.8.7 1.2 1.6 1.2 2.6h5.8c0-1 .4-1.9 1.2-2.6A6.3 6.3 0 0 0 12 2.8z"/><path d="M9.4 19.1h5.2M10.4 21.5h3.2"/></svg>`;
+const CURSOR = `<svg class="cur" viewBox="0 0 26 26"><path d="M4 2l0 19 5-4.6 3.4 7.4 3-1.4-3.4-7.2 6.8-.4z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const CHECK = `<svg class="ck" viewBox="0 0 18 18" fill="none" stroke="#eaeaea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5l4 4 8-9"/></svg>`;
+
+// One bright desktop, 1360 x 765. The tint layer multiplies each colour channel.
+function desk(withCursor) {
+  const lines = (ws) => ws.map((w) => `<div class="ln" style="width:${w}%"></div>`).join("");
+  const dots = `<i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>`;
+  const bars = [[38, "#2f7bf6"], [62, "#2f7bf6"], [50, "#2fb565"], [84, "#2f7bf6"], [70, "#2fb565"], [44, "#f2c230"], [92, "#2f7bf6"], [58, "#2fb565"]]
+    .map(([h, c]) => `<div style="flex:1;height:${h}%;background:${c};border-radius:3px 3px 0 0"></div>`).join("");
+  const code = [[0, 34, "#6cb6ff"], [1, 52, "#e6e6e6"], [2, 40, "#7ee787"], [2, 58, "#e6e6e6"], [1, 22, "#ffa657"], [0, 12, "#e6e6e6"], [0, 0, ""], [0, 44, "#6cb6ff"], [1, 60, "#e6e6e6"], [1, 36, "#7ee787"], [0, 10, "#e6e6e6"]]
+    .map(([ind, w, c]) => `<div style="height:8px;margin:0 0 12px ${ind * 22}px;width:${w}%;background:${c};border-radius:4px"></div>`).join("");
+  const sw = ["#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#0a84ff", "#af52de", "#ffffff", "#8e8e93", "#1c1c1e"]
+    .map((c) => `<div style="background:${c};border-radius:6px;border:1px solid rgba(0,0,0,.15)"></div>`).join("");
+  const dock = ["#0a84ff", "#34c759", "#ff9500", "#f2f2f7", "#af52de", "#ffcc00", "#1c1c1e"].map((c) => `<i style="background:${c};border:1px solid rgba(0,0,0,.15)"></i>`).join("");
+  return `<div class="scr">
+    <div class="mb"><div class="sq"></div><b>Notes</b><span>File</span><span>Edit</span><span>View</span><span>Window</span><span>Help</span>
+      <div class="r"><span class="bslot" style="width:20px;height:20px;display:block"></span><div class="bat"></div><span>Fri 22:14</span></div></div>
+    <div class="dw" style="left:64px;top:74px;width:560px;height:580px"><div class="tb">${dots}<span>Notes</span></div>
+      <div style="padding:34px 40px"><div style="height:20px;width:58%;background:#1d1d1f;border-radius:5px;margin-bottom:30px"></div>
+      ${lines([96, 88, 92, 60])}<div style="height:22px;margin:18px 0 26px;width:74%;background:#b9d6ff;border-radius:4px"></div>${lines([94, 90, 97, 82, 40])}
+      <div style="height:14px;width:34%;background:#1d1d1f;border-radius:4px;margin:30px 0 22px"></div>${lines([92, 96, 86, 90, 55])}</div></div>
+    <div class="dw" style="left:560px;top:150px;width:470px;height:330px"><div class="tb">${dots}<span>Chart</span></div>
+      <div style="position:absolute;left:34px;right:34px;top:60px;bottom:34px;border-left:1px solid #9aa0aa;border-bottom:1px solid #9aa0aa;display:flex;align-items:flex-end;gap:14px;padding:0 14px">${bars}</div></div>
+    <div class="dw" style="left:1040px;top:66px;width:262px;height:278px"><div class="tb">${dots}<span>Colours</span></div>
+      <div style="position:absolute;inset:50px 18px 18px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:10px">${sw}</div></div>
+    <div class="dw" style="left:800px;top:386px;width:500px;height:290px;background:#1b1c20;border-color:#3a3c42"><div class="tb" style="background:#2a2b30;border-color:#3a3c42;color:#aaa">${dots}<span>Editor</span></div>
+      <div style="padding:26px 30px">${code}</div></div>
+    <div class="dock">${dock}</div>
+    ${withCursor ? `<div class="ring"></div>${CURSOR}` : ""}
+    <div class="tint"></div></div>`;
+}
+const mon = (id, x, y, s, cur) => `<div class="mon" id="${id}" style="left:${x}px;top:${y}px;width:${Math.round(1360 * s) + 2}px;height:${Math.round(765 * s) + 2}px" data-s="${s}">${desk(cur)}</div>`;
+// Set the state of one drawn screen: c = [red, green, blue] ceilings, on = icon state (null hides the icon).
+function setScreen(m, c, on) {
+  const scr = m.firstElementChild;
+  scr.style.transform = `scale(${m.dataset.s})`;
+  scr.querySelector(".tint").style.background = `rgb(${c.map((v) => (v * 255).toFixed(1)).join(",")})`;
+  const key = on === null ? "n" : on ? "1" : "0";
+  if (m.dataset.b !== key) {
+    m.dataset.b = key;
+    scr.querySelector(".bslot").innerHTML = on === null ? "" : on ? BULB("#FF2A1F", "#FF2A1F") : BULB("none", "#f2f2f2");
+  }
+}
+// The switch is a hard cut: the app writes the gamma table in one step.
+const sw = (t, at) => (t >= at ? 1 : 0);
+
+/* ---------- scenes ---------- */
+const S = [];
+
+// A. the name
+{
+  const el = mk(`<div class="abs" id="a_b" style="left:900px;top:300px;width:120px;height:120px">${BULB("none", "#fff", 1.1)}</div>
+    <div class="h" id="a_h" style="top:480px">Red Light</div>
+    <div class="sub" id="a_s" style="top:630px">A menu-bar tool for macOS.</div>`);
+  $("#a_b svg", el).style.cssText = "width:120px;height:120px";
+  S.push({ el, a: 0, b: 2.6, run(t) {
+    fx($("#a_b", el), vis(t, .2, 2.6, .8)); fx($("#a_h", el), vis(t, .45, 2.6, .8)); fx($("#a_s", el), vis(t, .9, 2.6, .7));
+  } });
+}
+
+// B. one click, then the keys
+{
+  const el = mk(`${mon("b_m", 279, 50, 1, true)}
+    <div class="h s" id="b_h1" style="top:868px">A normal screen.</div>
+    <div class="h s" id="b_h2" style="top:852px">One click. Red light.</div>
+    <div class="sub" id="b_s2" style="top:950px">Click the bulb in the menu bar.</div>
+    <div class="abs" id="b_k" style="left:0;right:0;top:846px;display:flex;justify-content:center;gap:18px"><div class="key">⌃</div><div class="key">⌥</div><div class="key">⌘</div><div class="key">R</div></div>
+    <div class="sub" id="b_s3" style="top:962px">Control-Option-Command-R. From any app.</div>`);
+  const m = $("#b_m", el), cur = $(".cur", el), ring = $(".ring", el);
+  const T1 = 5.1, T2 = 8.3, T3 = 9.9;
+  EVENTS.push({ t: T1, type: "click" }, { t: T2, type: "click" }, { t: T3, type: "click" });
+  S.push({ el, a: 2.6, b: 10.8, run(t) {
+    op(m, vis(t, 2.7, 10.8, .7, .4));
+    let c = OFF, on = false;
+    if (t >= T1) { c = mix(OFF, RED, sw(t, T1)); on = true; }
+    if (t >= T2) { c = mix(RED, OFF, sw(t, T2)); on = false; }
+    if (t >= T3) { c = mix(OFF, RED, sw(t, T3)); on = true; }
+    setScreen(m, c, on);
+    // the pointer goes to the lower edge of the bulb (the icon stays visible), then back to a window
+    const bx = 1223, by = 15, p0 = [820, 470], p1 = [bx + 1, by + 8], p2 = [420, 330];
+    let p = p0;
+    if (t >= 3.5) p = mix(p0, p1, eIO((t - 3.5) / 1.3));
+    if (t >= 7.0) p = mix(p1, p2, eIO((t - 7.0) / 1.1));
+    cur.style.transform = `translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px)`;
+    const rk = clamp((t - T1) / .5);
+    ring.style.transform = `translate(${bx}px,${by}px) scale(${(.3 + 1.1 * eOut(rk)).toFixed(3)})`;
+    ring.style.opacity = t >= T1 && rk < 1 ? (1 - rk).toFixed(3) : "0";
+    fx($("#b_h1", el), vis(t, 2.9, 4.9, .6, .4));
+    fx($("#b_h2", el), vis(t, 5.15, 7.5, .5, .4)); fx($("#b_s2", el), vis(t, 5.5, 7.5, .5, .4));
+    const vk = vis(t, 7.7, 10.8, .5, .4);
+    fx($("#b_k", el), vk); fx($("#b_s3", el), vis(t, 7.95, 10.8, .5, .4));
+    let pr = 0; for (const T of [T2, T3]) if (t >= T - .05) pr = Math.max(pr, t < T + .1 ? 1 : clamp(1 - (t - T - .1) / .25));
+    for (const k of $("#b_k", el).children) { k.style.transform = `translateY(${(5 * pr).toFixed(2)}px)`; k.style.background = `rgb(${14 + 34 * pr},${14 + 34 * pr},${14 + 34 * pr})`; }
+  } });
+}
+
+// C. three presets
+{
+  const W = 520, G = 60, X0 = (1920 - 3 * W - 2 * G) / 2, s = (W - 2) / 1360;
+  const P = [["Red", RED, "#FF2A1F"], ["Dim Red", DIM, "#73130E"], ["Amber", AMBER, "#FF6600"]];
+  const el = mk(`<div class="h" id="c_h" style="top:130px">Three presets.</div>` + P.map(([n, c, col], i) =>
+    `${mon("c_m" + i, X0 + i * (W + G), 360, s)}<div class="abs" id="c_l${i}" style="left:${X0 + i * (W + G)}px;top:700px;width:${W}px"><div class="sw" style="background:${col}"></div><div class="pn">${n}</div><div class="pv">R ${f2(c[0])}&nbsp;&nbsp;G ${f2(c[1])}&nbsp;&nbsp;B ${f2(c[2])}</div></div>`).join("")
+    + `<div class="sub" id="c_s" style="top:930px">Each preset sets a ceiling for the red, green and blue channels.</div>`);
+  P.forEach((_, i) => EVENTS.push({ t: 11.5 + i * .45, type: "tick" }));
+  S.push({ el, a: 10.8, b: 14.8, run(t) {
+    fx($("#c_h", el), vis(t, 10.95, 14.8));
+    P.forEach(([n, c], i) => {
+      const v = vis(t, 11.4 + i * .45, 14.8, .6, .4), m = $("#c_m" + i, el);
+      setScreen(m, c, true); op(m, v); fx($("#c_l" + i, el), v);
+    });
+    fx($("#c_s", el), vis(t, 12.8, 14.8, .6, .4));
+  } });
+}
+
+// D. the menu and the sliders
+{
+  const s = 1000 / 1360;
+  const el = mk(`<div class="h s" id="d_h" style="top:70px">Tune each channel.</div>
+    ${mon("d_m", 100, 262, s)}
+    <div class="abs cap" id="d_v" style="left:100px;top:864px;width:1002px;text-align:center"></div>
+    <div class="abs cap" id="d_c" style="left:1220px;top:222px">Right-click</div>
+    <div class="menu" id="d_menu" style="left:1220px;top:262px;width:580px">
+      <div class="it">Turn Off<span class="k">⌃⌥⌘R</span></div><div class="sep"></div>
+      <div class="hd">Presets</div>
+      <div class="it"><span id="d_ck">${CHECK}</span>Red<span class="k">⌘1</span></div><div class="it">Dim Red<span class="k">⌘2</span></div><div class="it">Amber<span class="k">⌘3</span></div><div class="sep"></div>
+      <div class="hd">Tune</div>
+      ${["Red", "Green", "Blue"].map((n) => `<div class="sl"><span>${n}</span><div class="tr"><div class="fl"></div><div class="kn"></div></div></div>`).join("")}<div class="sep"></div>
+      <div class="it">Save Current as Preset…</div><div class="it">Delete Preset<span class="k">›</span></div><div class="sep"></div>
+      <div class="it">Open at Login</div><div class="it">Quit Red Light<span class="k">⌘Q</span></div>
+    </div>
+    <div class="sub" id="d_s" style="top:950px;left:100px;right:auto;width:1002px">Save the result as a preset of your own.</div>`);
+  const m = $("#d_m", el), fl = el.querySelectorAll(".fl"), kn = el.querySelectorAll(".kn");
+  S.push({ el, a: 14.8, b: 19.4, run(t) {
+    fx($("#d_h", el), vis(t, 14.95, 19.4)); op(m, vis(t, 15.0, 19.4, .6, .4));
+    fx($("#d_menu", el), vis(t, 15.2, 19.4, .5, .4), 10, 0); fx($("#d_c", el), vis(t, 15.2, 19.4, .5, .4), 10, 0);
+    const r = 1 - .55 * eIO((t - 15.9) / .8) + .3 * eIO((t - 17.0) / .7);
+    const g = .12 * (eIO((t - 17.7) / .5) - eIO((t - 18.3) / .5));
+    const c = [r, g, 0];
+    setScreen(m, c, true);
+    c.forEach((v, i) => { fl[i].style.width = (v * 100).toFixed(2) + "%"; kn[i].style.left = (v * 100).toFixed(2) + "%"; });
+    // The check mark stays: the app sets the check marks one time, when the menu opens.
+    $("#d_v", el).textContent = `Red ${f2(r)}   Green ${f2(g)}   Blue ${f2(0)}`;
+    $("#d_v", el).style.whiteSpace = "pre"; fx($("#d_v", el), vis(t, 15.4, 19.4, .5, .4), 10, 0);
+    fx($("#d_s", el), vis(t, 17.2, 19.4, .5, .4));
+  } });
+}
+
+// E. every display
+{
+  const el = mk(`<div class="h" id="e_h" style="top:120px">Every display.</div>
+    ${mon("e_m0", 190, 500, .3)}<div class="stand" id="e_st0" style="left:150px;top:738px;width:490px;height:1px"></div>
+    ${mon("e_m1", 660, 340, .44)}<div class="stand" id="e_st1" style="left:959px;top:680px;width:1px;height:58px"></div><div class="stand" id="e_st1b" style="left:860px;top:738px;width:200px;height:1px"></div>
+    ${mon("e_m2", 1320, 462, .3)}<div class="stand" id="e_st2" style="left:1524px;top:694px;width:1px;height:44px"></div><div class="stand" id="e_st2b" style="left:1454px;top:738px;width:142px;height:1px"></div>
+    <div class="sub" id="e_s" style="top:840px">The app sets the gamma table of each online display.</div>`);
+  const TE = 20.7; EVENTS.push({ t: TE, type: "click" });
+  S.push({ el, a: 19.4, b: 22.6, run(t) {
+    fx($("#e_h", el), vis(t, 19.55, 22.6));
+    const v = vis(t, 19.6, 22.6, .6, .4);
+    for (const i of [0, 1, 2]) { const m = $("#e_m" + i, el); setScreen(m, mix(OFF, RED, sw(t, TE)), t >= TE); op(m, v); }
+    el.querySelectorAll(".stand").forEach((x) => op(x, v));
+    fx($("#e_s", el), vis(t, 20.9, 22.6, .5, .4));
+  } });
+}
+
+// F. quit
+{
+  const s = .56;
+  const el = mk(`<div class="h s" id="f_h" style="top:160px">Quit restores your colours.</div>
+    ${mon("f_m", (1920 - 1360 * s) / 2, 320, s)}
+    <div class="abs cap" id="f_c" style="left:0;right:0;top:812px;text-align:center">Quit Red Light</div>`);
+  const TF = 23.9; EVENTS.push({ t: TF, type: "click" });
+  S.push({ el, a: 22.6, b: 25.4, run(t) {
+    fx($("#f_h", el), vis(t, 22.75, 25.4, .6, .4));
+    const m = $("#f_m", el); setScreen(m, mix(RED, OFF, sw(t, TF)), t >= TF ? null : true); op(m, vis(t, 22.8, 25.4, .6, .4));
+    fx($("#f_c", el), vis(t, 23.2, 25.4, .5, .4), 10, 0);
+  } });
+}
+
+// G. where to use it
+{
+  const U = ["A dark room", "Late work", "A shared bedroom", "Stargazing", "A cockpit or a boat at night"];
+  const el = mk(`<div class="h" id="g_h" style="top:300px">For dark places.</div>` + U.map((u, i) => `<div class="uc" id="g_u${i}" style="top:${510 + i * 62}px">${u}</div>`).join(""));
+  S.push({ el, a: 25.4, b: 28.6, run(t) {
+    fx($("#g_h", el), vis(t, 25.55, 28.6, .6, .4));
+    U.forEach((_, i) => fx($("#g_u" + i, el), vis(t, 25.95 + i * .28, 28.6, .5, .4), 10, 8));
+  } });
+}
+
+// H. the end
+{
+  const el = mk(`<div class="abs" id="h_b" style="left:900px;top:300px;width:120px;height:120px">${BULB("#FF2A1F", "#FF2A1F", 1.1)}</div>
+    <div class="h" id="h_h" style="top:480px">Red Light</div>
+    <div class="sub" id="h_s" style="top:630px">Free. Open source.</div>`);
+  $("#h_b svg", el).style.cssText = "width:120px;height:120px";
+  EVENTS.push({ t: 28.8, type: "end" });
+  S.push({ el, a: 28.6, b: 32.01, run(t) {
+    const out = eIO((32 - t) / .6);
+    fx($("#h_b", el), Math.min(ramp(t, 28.8, .8), out)); fx($("#h_h", el), Math.min(ramp(t, 29.05, .8), out)); fx($("#h_s", el), Math.min(ramp(t, 29.6, .7), out));
+  } });
+}
+
+// Draw the frame for time t (seconds). This is a pure function of t.
+function seek(t) {
+  for (const s of S) {
+    const on = t >= s.a && t < s.b;
+    s.el.style.visibility = on ? "visible" : "hidden";
+    if (on) s.run(t);
+  }
+}
+window.seek = seek; window.EVENTS = EVENTS; window.DUR = DUR;
+seek(0);
+</script>
+</body>
+</html>
